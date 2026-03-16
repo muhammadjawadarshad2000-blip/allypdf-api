@@ -54,56 +54,66 @@ const generateTokens = async (c, user, oldRefreshToken = null) => {
 // --- CONTROLLERS ---
 
 export const registerUser = async (c) => {
-  const { fullName, email, password, role, deviceName } = c.get('validatedData');
-
-  const existingUser = await c.env.DB.prepare(
-    "SELECT id FROM users WHERE email = ?"
-  ).bind(email).first();
-
-  if (existingUser) return sendError(c, 409, "User already exists");
-
-  const userId = generateId();
-  const salt = generateSalt();
-  const hashedPassword = await hashPassword(password, salt);
+  try{
+    const { fullName, email, password, role, deviceName } = c.get('validatedData');
+  
+    const existingUser = await c.env.DB.prepare(
+      "SELECT id FROM users WHERE email = ?"
+    ).bind(email).first();
+  
+    if (existingUser) return sendError(c, 409, "User already exists");
+  
+    const userId = generateId();
+    const salt = generateSalt();
+    const hashedPassword = await hashPassword(password, salt);
 
   // 1. Create User
-  await c.env.DB.prepare(
-    "INSERT INTO users (id, fullName, email, password, salt, role) VALUES (?, ?, ?, ?, ?, ?)"
-  ).bind(
-    userId,
-    fullName,
-    email,
-    hashedPassword,
-    salt,
-    role || 'user'
-  ).run();
+    await c.env.DB.prepare(
+      "INSERT INTO users (id, fullName, email, password, salt, role) VALUES (?, ?, ?, ?, ?, ?)"
+    ).bind(
+      userId,
+      fullName,
+      email,
+      hashedPassword,
+      salt,
+      role || 'user'
+    ).run();
+  
+    // 2. AUTO-TRUST FIRST DEVICE
+    const userAgent = c.req.header('User-Agent') || 'unknown';
+    const deviceHash = await hashPassword(userAgent, userId);
 
-  // 2. AUTO-TRUST FIRST DEVICE
-  const userAgent = c.req.header('User-Agent') || 'unknown';
-  const deviceHash = await hashPassword(userAgent, userId);
+    await c.env.DB.prepare(
+      "INSERT INTO trusted_devices (id, user_id, device_hash, device_name, is_verified) VALUES (?, ?, ?, ?, 1)"
+    ).bind(
+      crypto.randomUUID(), userId, deviceHash, deviceName || "Initial Device"
+    ).run();
+  
+    // 3. GENERATE TOKENS IMMEDIATELY
+    const tokens = await generateTokens(c, { id: userId, role: role || 'user' });
+  
+    // 4. Background Welcome Email
+    c.executionCtx.waitUntil(
+      sendEmail(c.env.RESEND_API_KEY, email, "Welcome to Allypdf", emailTemplates.welcome(c, fullName)).catch(console.error)
+    );
 
-  await c.env.DB.prepare(
-    "INSERT INTO trusted_devices (id, user_id, device_hash, device_name, is_verified) VALUES (?, ?, ?, ?, 1)"
-  ).bind(
-    crypto.randomUUID(), userId, deviceHash, deviceName || "Initial Device"
-  ).run();
-
-  // 3. GENERATE TOKENS IMMEDIATELY
-  const tokens = await generateTokens(c, { id: userId, role: role || 'user' });
-
-  // 4. Background Welcome Email
-  c.executionCtx.waitUntil(
-    sendEmail(c.env.RESEND_API_KEY, email, "Welcome to Allypdf", emailTemplates.welcome(c, fullName)).catch(console.error)
-  );
-
-  return sendSuccess(
-    c, 201,
-    {
-      user: { id: userId, email, fullName },
-      ...tokens
-    },
-    "Account created and verified."
-  );
+    return sendSuccess(
+        c, 201,
+        {
+          user: { id: userId, email, fullName },
+          ...tokens
+        },
+        "Account created and verified."
+      );
+    } catch (error) {
+      return c.json({
+        success: false,
+        message: "CRITICAL CRASH",
+        errorName: error.name,
+        errorMessage: error.message,
+        stackTrace: error.stack
+    }, 500);
+  }
 };
 
 export const loginUser = async (c) => {

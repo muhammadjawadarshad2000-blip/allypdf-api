@@ -14,7 +14,7 @@ export const submitContactForm = async (c) => {
   // Background notifications
   c.executionCtx.waitUntil(
     Promise.all([
-      sendEmail(c.env.RESEND_API_KEY, c.env.ADMIN_EMAIL, `New Support Ticket: ${subject}`, emailTemplates.adminContactAlert(c, name, email, subject, message)),
+      //sendEmail(c.env.RESEND_API_KEY, c.env.ADMIN_EMAIL, `New Support Ticket: ${subject}`, emailTemplates.adminContactAlert(c, name, email, subject, message)),
       sendEmail(c.env.RESEND_API_KEY, email, "We received your message", emailTemplates.contactConfirmation(c, name))
     ]).catch(console.error)
   );

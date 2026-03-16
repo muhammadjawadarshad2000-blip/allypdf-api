@@ -8,12 +8,12 @@ import { sendSuccess, sendError } from '../utils/response';
 
 const generateTokens = async (c, user, oldRefreshToken = null) => {
   const accessToken = await sign(
-    { id: user.id, role: user.role, exp: Math.floor(Date.now() / 1000) + (60 * 5) }, // 15 mins
+    { id: user.id, role: user.role, exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) },
     c.env.ACCESS_TOKEN_SECRET
   );
 
   const refreshToken = await sign(
-    { id: user.id, role: user.role, exp: Math.floor(Date.now() / 1000) + (60 * 30) }, // 7 days
+    { id: user.id, role: user.role, exp: Math.floor(Date.now() / 1000) + (60 *  60 * 24 * 30) },
     c.env.REFRESH_TOKEN_SECRET
   );
 

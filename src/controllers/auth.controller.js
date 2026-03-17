@@ -40,13 +40,13 @@ const generateTokens = async (c, user, oldRefreshToken = null) => {
   // Set Cookies
   const cookieOptions = {
     httpOnly: true,
-    secure: true, // Set to true in production
-    sameSite: 'None',
+    secure: true,
+    sameSite: 'Lax',
     path: '/'
   };
 
-  setCookie(c, 'accessToken', accessToken, { ...cookieOptions, maxAge: 60 * 5 });
-  setCookie(c, 'refreshToken', refreshToken, { ...cookieOptions, maxAge: 60 * 30 });
+  setCookie(c, 'accessToken', accessToken, { ...cookieOptions, maxAge: 60 * 60 * 24 });
+  setCookie(c, 'refreshToken', refreshToken, { ...cookieOptions, maxAge: 60 * 60 * 24 * 30 });
 
   return { accessToken, refreshToken };
 };

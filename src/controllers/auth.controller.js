@@ -13,11 +13,11 @@ const generateTokens = async (c, user, oldRefreshToken = null) => {
   );
 
   const refreshToken = await sign(
-    { id: user.id, role: user.role, exp: Math.floor(Date.now() / 1000) + (60 *  60 * 24 * 30) },
+    { id: user.id, role: user.role, exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 30) },
     c.env.REFRESH_TOKEN_SECRET
   );
 
-  const expiresAt = new Date(Date.now() + 1000 * 60 * 30).toISOString();
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString();
 
   // DB Logic: If oldRefreshToken exists, update that row. Otherwise, insert new.
   if (oldRefreshToken) {

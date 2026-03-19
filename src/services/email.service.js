@@ -70,7 +70,7 @@ export const emailTemplates = {
               <p style="margin-top: 0; font-weight: 600; color: #1e293b; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;">Your Quick Start Guide:</p>
               <div class="feature-item">
                 <span class="feature-icon">✓</span>
-                <span class="feature-text"><strong>Convert:</strong> Switch between PDF, Word, and Image formats.</span>
+                <span class="feature-text"><strong>Convert:</strong> Switch between PDF, HTML and Image formats.</span>
               </div>
               <div class="feature-item">
                 <span class="feature-icon">✓</span>

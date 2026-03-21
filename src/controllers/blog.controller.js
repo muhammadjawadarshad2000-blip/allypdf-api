@@ -65,6 +65,13 @@ export const getPostBySlug = async (c) => {
 
   if (!post) return sendError(c, 404, "Post not found");
 
+  if (!isUuid) {
+    await c.env.DB.prepare(`
+      UPDATE blogs SET views = views + 1 WHERE id = ?
+    `).bind(post.id).run();
+    post.views += 1; 
+  }
+
   // Fetch tags for this post
   const { results: tags } = await c.env.DB.prepare(
     "SELECT tag FROM blog_tags WHERE blog_id = ?"

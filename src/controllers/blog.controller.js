@@ -79,7 +79,7 @@ export const getPostBySlug = async (c) => {
 
   // Fetch related posts (same category, excluding current)
   const { results: relatedPosts } = await c.env.DB.prepare(`
-    SELECT id, title, slug, excerpt, cover_image, published_at, reading_time 
+    SELECT id, title, slug, excerpt, cover_image, related_tool, published_at, reading_time 
     FROM blogs 
     WHERE category = ? AND id != ? AND status = 'published'
     LIMIT 3

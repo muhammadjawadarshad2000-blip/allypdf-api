@@ -36,5 +36,6 @@ app.route('/api/v1/converter', converterRoutes);
 
 // Health check
 app.get('/health', (c) => c.json({ status: "OK", edge: true }));
+app.get('/', (c) => c.json({ status: "OK", edge: true }));
 
 export default app;

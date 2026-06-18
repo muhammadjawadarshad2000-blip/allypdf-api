@@ -25,13 +25,14 @@ export const getPublishedPosts = async (c) => {
     params.push(`%${search}%`, `%${search}%`);
   }
 
-  // Get total count for pagination UI in Blog.jsx
   const countResult = await c.env.DB.prepare(`SELECT COUNT(*) as total ${queryStr}`).bind(...params).first();
   const total = countResult.total;
 
-  // Get paginated results
   const { results } = await c.env.DB.prepare(`
-    SELECT * ${queryStr} 
+    SELECT 
+      id, title, slug, excerpt, cover_image, 
+      category, status, published_at, reading_time, views 
+    ${queryStr} 
     ORDER BY published_at DESC 
     LIMIT ? OFFSET ?
   `).bind(...params, parseInt(limit), offset).all();
@@ -52,7 +53,6 @@ export const getPostBySlug = async (c) => {
   
   if (!identifier) return sendError(c, 400, "Identifier is required");
 
-  // Determine if we are looking up by ID or Slug
   const isUuid = identifier.length === 36; 
   const queryField = isUuid ? "b.id" : "b.slug";
 
@@ -61,23 +61,23 @@ export const getPostBySlug = async (c) => {
     FROM blogs b 
     JOIN users u ON b.author_id = u.id 
     WHERE ${queryField} = ?
-  `).bind(identifier).first(); // Now identifier is never undefined
+  `).bind(identifier).first();
 
   if (!post) return sendError(c, 404, "Post not found");
+
+  const { author_id, ...postData } = post;
 
   if (!isUuid) {
     await c.env.DB.prepare(`
       UPDATE blogs SET views = views + 1 WHERE id = ?
     `).bind(post.id).run();
-    post.views += 1; 
+    postData.views += 1; 
   }
 
-  // Fetch tags for this post
   const { results: tags } = await c.env.DB.prepare(
     "SELECT tag FROM blog_tags WHERE blog_id = ?"
   ).bind(post.id).all();
 
-  // Fetch related posts (same category, excluding current)
   const { results: relatedPosts } = await c.env.DB.prepare(`
     SELECT id, title, slug, excerpt, cover_image, related_tool, published_at, reading_time 
     FROM blogs 
@@ -86,7 +86,7 @@ export const getPostBySlug = async (c) => {
   `).bind(post.category, post.id).all();
 
   return sendSuccess(c, 200, {
-    ...post,
+    ...postData,
     tags: tags.map(t => t.tag),
     relatedPosts
   });

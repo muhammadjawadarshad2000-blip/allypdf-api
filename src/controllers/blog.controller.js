@@ -30,7 +30,7 @@ export const getPublishedPosts = async (c) => {
 
   const { results } = await c.env.DB.prepare(`
     SELECT 
-      id, title, slug, excerpt, cover_image, 
+      id, title, slug, excerpt, cover_image, related_tool, 
       category, status, published_at, reading_time, views 
     ${queryStr} 
     ORDER BY published_at DESC 
